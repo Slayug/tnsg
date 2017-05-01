@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+'use strict';
 /*
 The MIT License (MIT)
 
@@ -70,22 +72,31 @@ var args = parser.parseArgs();
 
 if( args.page != null ){
     for(var p = 0; p < args.page.length; p++){
-        log( 'creating page: ' + args.page[ p ] + "..." );
-        createPage( args.page[ p ] );
+        let pageName = args.page[ p ];
+        let path = '';
+        if( args.page[ p ].indexOf( '/' ) != -1 ){
+            var pageNameSplitted = args.page[ p ].split( '/' );
+            pageName = pageNameSplitted[ pageNameSplitted.length - 1 ];
+            for(var s = 0; s < pageNameSplitted.length - 1; s++ ){
+                path += pageNameSplitted[ s ] + "/";
+            }
+        }
+        log( 'creating page: ' + pageName.capitalize() + "..." );
+        createPage( pageName, path );
     }
 }
 if( args.class != null ){
     for(var c = 0; c < args.class.length; c++){
-        log( "creating class " + args.class[ c ] + "..." );
-        var askCreatePage = prompt( TAG_LOG + "create page with it ? [n|y] (n):", "n");
-        var askCreateService = prompt( TAG_LOG + "create service with it ? [n|y] (n):", "n");
-
-        if( askCreatePage == 'y' ){
-            createPage( args.class[ c ] );
-        }
-        if( askCreateService == 'y' ){
-            createService( args.class[ c ] );
-        }
+        log( "creating class " + args.class[ c ].capitalize() + "..." );
+        // var askCreatePage = prompt( TAG_LOG + "create page with it ? [n|y] (n):", "n");
+        // var askCreateService = prompt( TAG_LOG + "create service with it ? [n|y] (n):", "n");
+        //
+        // if( askCreatePage == 'y' ){
+        //     createPage( args.class[ c ] );
+        // }
+        // if( askCreateService == 'y' ){
+        //     createService( args.class[ c ] );
+        // }
 
         createClass( args.class[ c ] );
     }
@@ -93,7 +104,7 @@ if( args.class != null ){
 if( args.service != null ){
     for(var p = 0; p < args.service.length; p++){
         log( 'creating service: ' + args.service[ p ] + "..");
-        createService( args.service[ p ] );
+        createService( args.service[ p ]);
     }
 
 }
@@ -109,26 +120,27 @@ if( args.service != null ){
 *       - pageName.html
 *   In last time update the app.module.ts
 *   @param {String} 'pageName' page name will be created
+*   @param {String} 'path' path of the page
 **/
-function createPage( pageName ){
+function createPage( pageName, path ){
     //create page with intermediates folders
-    writeFileWithCheck( APP_PATH + DEFAULT_PATH_PAGE + pageName + '/' +
+    writeFileWithCheck( APP_PATH + path +pageName + '/' +
     pageName + '.android.css' );
 
-    writeFileWithCheck( APP_PATH + DEFAULT_PATH_PAGE + pageName + '/' +
+    writeFileWithCheck( APP_PATH + path + pageName + '/' +
     pageName + '.ios.css' );
 
-    writeFileWithCheck( APP_PATH + DEFAULT_PATH_PAGE + pageName + '/' +
+    writeFileWithCheck( APP_PATH + path + pageName + '/' +
     pageName + '-common.css' );
 
-    writeFileWithCheck( APP_PATH + DEFAULT_PATH_PAGE + pageName + '/' +
+    writeFileWithCheck( APP_PATH + path + pageName + '/' +
     pageName + '.component.ts', generateContentComponent( pageName ) );
 
-    writeFileWithCheck( APP_PATH + DEFAULT_PATH_PAGE + pageName + '/' +
+    writeFileWithCheck( APP_PATH + path + pageName + '/' +
     pageName + '.html', "<Label text='hello world, i am " + pageName +
     " page.'></Label>");
 
-    insertComponentInModule( pageName );
+    insertComponentInModule( pageName, path );
 }
 
 /**
@@ -136,7 +148,7 @@ function createPage( pageName ){
 *   First check if the file exist, if it is, ask the user if the file should
 *   be rewrite, then do it or not.
 *   @param {String} 'filePath' path of the file with his name
-*   @param {String} 'content' optionnel, content who will write in the file
+*   @param {String} 'content' optionnel, content who will be writed in the file
 **/
 function writeFileWithCheck( filePath, content ){
     if( fileExists.sync( filePath ) ){
@@ -148,6 +160,7 @@ function writeFileWithCheck( filePath, content ){
             return;
         }
     }
+    content = content || '';
     writeFile(filePath, content, function(err) {
         if (err) throw new Error("Cannot writeFile " + filePath +
         BREAK_LINE + err );
@@ -228,7 +241,13 @@ function createClass( className ){
 *   @param {String} 'componentName' name of the component.
 *
 **/
-function insertComponentInModule( componentName ){
+function insertComponentInModule( componentName, path ){
+
+    if( ! fileExists.sync( './app/app.module.ts' ) ){
+        logError( './app/app.module.ts'.underline + ' not found.' );
+        return;
+    }
+
     var content = read.sync('./app/app.module.ts', 'utf8');
 
     //check if Component already inserted in app.module.js
@@ -239,17 +258,18 @@ function insertComponentInModule( componentName ){
     //inserting import
     var headerIndex = content.indexOf( '@NgModule' ) - 1;
     var firstPart = content.substring( 0, headerIndex );
-    firstPart += 'import { '+ componentName.capitalize()  +
-    'Component } from \'./' + DEFAULT_PATH_PAGE + componentName + '/' + componentName +
+    firstPart += 'import { ' + componentName.capitalize()  +
+    'Component } from \'./' + path + componentName + '/' + componentName +
     '.component\';' +
     BREAK_LINE + BREAK_LINE;
     content = firstPart + content.substring( headerIndex + 1, content.length );
 
     //inserting declarations
-    var preIndex = content.indexOf( 'declarations: [' );
-    var commaIndex = preIndex + content.substring( preIndex ).indexOf( ',' ) + 1;
+    var preIndex = content.indexOf( 'declarations' );
+    var commaIndex = preIndex + content.substring( preIndex ).indexOf( ']' );
     firstPart = content.substring( 0, commaIndex );
-    firstPart += BREAK_LINE + TAB_CHAR + TAB_CHAR+ componentName.capitalize() + "Component,";
+    firstPart += ',' + BREAK_LINE + TAB_CHAR + TAB_CHAR +
+                componentName.capitalize() + "Component";
     var secondPart = content.substring( commaIndex, content.length );
 
     content = firstPart + secondPart;
