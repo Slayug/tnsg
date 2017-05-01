@@ -9,7 +9,7 @@ Generate quickly your pages, services, class..
 ```bash
 npm install -g tnsg
 ```
-## Generating Pages, Service, Class
+## Generating Pages, Service, Class (Angular)
 
 Scaffold  | Usage
 ---       | ---
@@ -32,3 +32,16 @@ Scaffold  | Usage
  - ./app/pages/user-detail/user-detail-common.css
  - ./app/pages/user-detail/user-detail.component.ts
  - ./app/pages/user-detail/user-detail.html
+ and link the component in *app.module.ts*
+
+ ## Generating View {N}
+
+ Scaffold  | Usage
+ ---       | ---
+ `View` | `tnsg -vi my-view`
+
+### Examples:
+`tnsg -vi views/user` will generate:
+ - ./app/views/user/user.css
+ - ./app/views/user/user.js
+ - ./app/views/user/user.xml

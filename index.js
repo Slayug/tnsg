@@ -42,8 +42,8 @@ String.prototype.capitalize = function() {
 
 //COMMAND DESCRIPTION
 var parser = new ArgumentParser({
-    version: '0.0.1',
-    addHelp:true,
+    version: '0.1.7',
+    addHelp: true,
     description: 'tnsg'
 });
 parser.addArgument(
@@ -67,36 +67,28 @@ parser.addArgument(
         nargs: '*'
     }
 );
+parser.addArgument(
+    [ '-view', '-vi' ],
+    {
+        help: '-vi my-new-view',
+        nargs: '*'
+    }
+);
 
 var args = parser.parseArgs();
 
 if( args.page != null ){
     for(var p = 0; p < args.page.length; p++){
-        let pageName = args.page[ p ];
-        let path = '';
-        if( args.page[ p ].indexOf( '/' ) != -1 ){
-            var pageNameSplitted = args.page[ p ].split( '/' );
-            pageName = pageNameSplitted[ pageNameSplitted.length - 1 ];
-            for(var s = 0; s < pageNameSplitted.length - 1; s++ ){
-                path += pageNameSplitted[ s ] + "/";
-            }
-        }
-        log( 'creating page: ' + pageName.capitalize() + "..." );
-        createPage( pageName, path );
+        var result = getPathAndName( args.page[ p ] );
+        var name = result.name;
+        var path = result.path;
+        log( 'creating page: ' + adaptName( name ) + "..." );
+        createPage( name, path );
     }
 }
 if( args.class != null ){
     for(var c = 0; c < args.class.length; c++){
         log( "creating class " + args.class[ c ].capitalize() + "..." );
-        // var askCreatePage = prompt( TAG_LOG + "create page with it ? [n|y] (n):", "n");
-        // var askCreateService = prompt( TAG_LOG + "create service with it ? [n|y] (n):", "n");
-        //
-        // if( askCreatePage == 'y' ){
-        //     createPage( args.class[ c ] );
-        // }
-        // if( askCreateService == 'y' ){
-        //     createService( args.class[ c ] );
-        // }
 
         createClass( args.class[ c ] );
     }
@@ -106,7 +98,28 @@ if( args.service != null ){
         log( 'creating service: ' + args.service[ p ] + "..");
         createService( args.service[ p ]);
     }
+}
+if( args.view != null ){
+    for(var v = 0; v < args.view.length; v++){
+        var result = getPathAndName( args.view[ v ] );
+        var name = result.name;
+        var path = result.path;
+        log( 'creating view: ' + adaptName( name ) + "..");
+        createView( name, path);
+    }
+}
 
+function getPathAndName( inputName ){
+    let name = inputName;
+    let path = '';
+    if( inputName.indexOf( '/' ) != -1 ){
+        var pageNameSplitted = inputName.split( '/' );
+        name = pageNameSplitted[ pageNameSplitted.length - 1 ];
+        for(var s = 0; s < pageNameSplitted.length - 1; s++ ){
+            path += pageNameSplitted[ s ] + "/";
+        }
+    }
+    return { name: name, path: path };
 }
 
 
@@ -155,6 +168,30 @@ function createPage( pageName, path ){
 
     insertComponentInModule( pageName, path );
 }
+
+function createView( viewName, path ){
+    //create view with intermediates folders
+    writeFileWithCheck( APP_PATH + path + viewName + '/' +
+    viewName + '.css' );
+
+    writeFileWithCheck( APP_PATH + path + viewName + '/' +
+    viewName + '.xml', generateContentView( viewName ) );
+
+    writeFileWithCheck( APP_PATH + path + viewName + '/' +
+    viewName + '.js', generateContentLogicView( viewName ) );
+
+}
+
+function generateContentLogicView( viewName ){
+    return 'exports.' + adaptName( viewName ) + 'Loaded = function() {' + BREAK_LINE +
+    TAB_CHAR + TAB_CHAR + 'console.log(" ' + adaptName( viewName ) + ' Loaded ");' + BREAK_LINE + '};';
+}
+
+function generateContentView( viewName ){
+    return '<Page loaded="' + adaptName( viewName ) + 'Loaded">' +
+    BREAK_LINE + '</Page>';
+}
+
 
 /**
 *
@@ -282,7 +319,7 @@ function insertComponentInModule( componentName, path ){
     var commaIndex = preIndex + content.substring( preIndex ).indexOf( ']' );
     firstPart = content.substring( 0, commaIndex );
     firstPart += ',' + BREAK_LINE + TAB_CHAR + TAB_CHAR +
-                adaptName( componentName ) + "Component";
+    adaptName( componentName ) + "Component";
     var secondPart = content.substring( commaIndex, content.length );
 
     content = firstPart + secondPart;
