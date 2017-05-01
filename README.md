@@ -25,3 +25,10 @@ Scaffold  | Usage
  - ./app/pages/login/login.component.ts
  - ./app/pages/login/login.html
  and link the component in *app.module.ts*
+
+`tnsg -p pages/user-detail` will generate:
+ - ./app/pages/user-detail/user-detail.android.css
+ - ./app/pages/user-detail/user-detail.ios.css
+ - ./app/pages/user-detail/user-detail-common.css
+ - ./app/pages/user-detail/user-detail.component.ts
+ - ./app/pages/user-detail/user-detail.html

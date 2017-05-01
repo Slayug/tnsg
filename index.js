@@ -109,6 +109,19 @@ if( args.service != null ){
 
 }
 
+
+function adaptName( name ){
+    if( name.indexOf( '-' ) != -1 ){
+        var newName = '';
+        var nameSplitted = name.split( '-' );
+        for(var n = 0; n < nameSplitted.length; n++){
+            newName += nameSplitted[ n ].capitalize();
+        }
+        return newName;
+    }
+    return name.capitalize();
+}
+
 /**
 *   Create the page with the name passed
 *   Create the following folders: app/pages/pageName
@@ -198,7 +211,7 @@ function generateContentComponent( pageName ){
     pageName + '/' + pageName + '.css"]' + BREAK_LINE +
     '})' + BREAK_LINE;
 
-    const EXPORT_CLASS = 'export class ' + pageName.capitalize() + 'Component implements OnInit {' + BREAK_LINE;
+    const EXPORT_CLASS = 'export class ' + adaptName( pageName ) + 'Component implements OnInit {' + BREAK_LINE;
     const CONSTRUCTOR = TAB_CHAR + 'constructor(){}' + BREAK_LINE;
     const NG_ON_INIT = TAB_CHAR + 'ngOnInit(){}' + BREAK_LINE;
     const CLOSE_BRACKET = '}';
@@ -221,7 +234,7 @@ function generateContentComponent( pageName ){
 *                   class: ClassName
 **/
 function generateContentClass( className ){
-    return "export class " + className.capitalize() + "{" + BREAK_LINE + "}";
+    return "export class " + adaptName( pageName ) + "{" + BREAK_LINE + "}";
 }
 
 /**
@@ -251,14 +264,14 @@ function insertComponentInModule( componentName, path ){
     var content = read.sync('./app/app.module.ts', 'utf8');
 
     //check if Component already inserted in app.module.js
-    if( content.indexOf( componentName.capitalize() + "Component" ) !== -1 ){
+    if( content.indexOf( adaptName( componentName ) + "Component" ) !== -1 ){
         return;
     }
 
     //inserting import
     var headerIndex = content.indexOf( '@NgModule' ) - 1;
     var firstPart = content.substring( 0, headerIndex );
-    firstPart += 'import { ' + componentName.capitalize()  +
+    firstPart += 'import { ' + adaptName( componentName )  +
     'Component } from \'./' + path + componentName + '/' + componentName +
     '.component\';' +
     BREAK_LINE + BREAK_LINE;
@@ -269,7 +282,7 @@ function insertComponentInModule( componentName, path ){
     var commaIndex = preIndex + content.substring( preIndex ).indexOf( ']' );
     firstPart = content.substring( 0, commaIndex );
     firstPart += ',' + BREAK_LINE + TAB_CHAR + TAB_CHAR +
-                componentName.capitalize() + "Component";
+                adaptName( componentName ) + "Component";
     var secondPart = content.substring( commaIndex, content.length );
 
     content = firstPart + secondPart;
@@ -296,7 +309,7 @@ function generateContentService( serviceName ){
     return "import { Injectable } from '@angular/core';" + BREAK_LINE +
     BREAK_LINE +
     "@Injectable()" + BREAK_LINE +
-    "export class " + serviceName.capitalize() + "Service {"+ BREAK_LINE +
+    "export class " + adaptName( serviceName ) + "Service {"+ BREAK_LINE +
     TAB_CHAR + "constructor() { }" + BREAK_LINE + "}";
 }
 
